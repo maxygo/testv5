@@ -7,17 +7,23 @@ env:
     S3_BUCKET: "max-springbootdocker"
 
 phases:
-
-  pre_build: 
-    commands:
-
-      # Validate all of the CloudFormation templates
-      - chmod a+x ./tests/validate-templates.sh
-      - ./tests/validate-templates.sh
-
   build:
     commands:
-
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - cd ..
+      - ./mvnw clean install
+      - ./mvnw dockerfile:build
+      - docker tag gs-spring-boot-docker:latest 015411923805.dkr.ecr.us-east-1.amazonaws.com/gs-spring-boot-docker
       # Sync the templates
       # - aws s3 sync . s3://${S3_BUCKET}
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push 015411923805.dkr.ecr.us-east-1.amazonaws.com/gs-spring-boot-docker/nodeserver:latest
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --region us-east-1)
 
